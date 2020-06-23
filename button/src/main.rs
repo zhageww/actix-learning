@@ -1,0 +1,33 @@
+use std::collections::HashMap;
+
+use actix_web::{web, App, HttpResponse, HttpServer, Result};
+use askama::Template;
+
+
+#[derive(Template)]
+#[template(path = "index.html")]
+struct Index;
+
+
+async fn index(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
+    let s = if let Some(name) = query.get("button") {
+        name
+    } else {
+        ""
+    };
+    println!("name : {}", s);
+    let s = Index.render().unwrap();
+    Ok(HttpResponse::Ok().content_type("text/html").body(s))
+}
+
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    // start http server
+    HttpServer::new(move || {
+        App::new()
+        .service(web::resource("/").route(web::get().to(index)))
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
+}
